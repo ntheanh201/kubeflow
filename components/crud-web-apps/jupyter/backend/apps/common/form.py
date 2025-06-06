@@ -227,8 +227,8 @@ def set_notebook_gpus(notebook, body, defaults):
     gpus = get_form_value(body, defaults, "gpus")
 
     # Make sure the GPUs value is properly formatted
-    if "num" not in gpus:
-        raise BadRequest("'gpus' must have a 'num' field")
+    if "num" not in gpus and "fractional" not in gpus and "fractionalMemory" not in gpus and "core" not in gpus:
+        raise BadRequest("'gpus' must have either a 'num', 'fractional', 'fractionalMemory', or 'core' field")
 
     if gpus["num"] == "none":
         return
@@ -236,9 +236,25 @@ def set_notebook_gpus(notebook, body, defaults):
     if "vendor" not in gpus:
         raise BadRequest("'gpus' must have a 'vendor' field")
 
+    # Handle fractional GPUs with HAMi-Scheduler
+    if "fractional" in gpus and gpus["fractional"]:
+        gpu_value = gpus["fractional"]
+        gpu_type = "fractional"
+    elif "fractionalMemory" in gpus and gpus["fractionalMemory"]:
+        gpu_value = gpus["fractionalMemory"]
+        gpu_type = "memory"
+    elif "core" in gpus and gpus["core"]:
+        gpu_value = gpus["core"]
+        gpu_type = "core"
+
+    # TODO-ntheanh201: handle fractional GPUs with KAI-Scheduler
+    notebook_annotations = notebook["metadata"]["annotations"]
+
     # set the gpus annotation
     container = notebook["spec"]["template"]["spec"]["containers"][0]
     vendor = gpus["vendor"]
+   
+    # Handle whole number GPUs
     try:
         num = str(gpus["num"])
     except ValueError:
@@ -246,9 +262,59 @@ def set_notebook_gpus(notebook, body, defaults):
 
     limits = container["resources"].get("limits", {})
     limits[vendor] = num
+        
+    try:
+        # Convert to string, handling both integer and fractional values
+        if isinstance(gpu_value, (int, float)):
+            gpu_str = str(gpu_value)
+        else:
+            # Validate that it's a valid number
+            float(gpu_value)
+            gpu_str = str(gpu_value)
+    except (ValueError, TypeError):
+        raise BadRequest("GPU value is not a valid number: %s" % gpu_value)
 
+    # Handle fractional GPUs
+    if gpu_type == "fractional":
+        fractional_key = vendor.replace("/gpu", "/gpumem-percentage")
+        limits[fractional_key] = str(float(gpu_str) * 100)
+
+    # Handle memory-based fractional GPUs
+    if gpu_type == "memory":
+        memory_key = vendor.replace("/gpu", "/gpumem")
+        limits[memory_key] = gpu_str
+
+    # Handle device code usage fractional GPUs    
+    if gpu_type == "core":
+        core_key = vendor.replace("/gpu", "/gpucores")
+        limits[core_key] = gpu_str
+
+    # Handle certain device type
+    gpu_assign_device = gpus["assign_device"] if "assign_device" in gpus else None
+    gpu_assign_device_value = gpus["assign_device_value"] if "assign_device_value" in gpus else None
+    # Assign to certain device type
+    if gpu_assign_device == "type":
+        # metadata:
+        #   annotations:
+        #     nvidia.com/use-gputype: "A100,V100" or
+        #     nvidia.com/nouse-gputype: "1080,2080"
+        if gpu_assign_device_value[0].isdigit():
+            gpu_type_key = vendor.replace("/gpu", "/nouse-gputype")
+        else:
+            gpu_type_key = vendor.replace("/gpu", "/use-gputype")
+        notebook_annotations[gpu_type_key] = gpu_assign_device_value
+    
+    if gpu_assign_device == "uuid":
+        # metadata:
+        #   annotations:
+        #     nvidia.com/use-gpuuuid: "GPU-123456"
+        gpu_type_key = vendor.replace("/gpu", "/use-gpuuuid")
+        notebook_annotations[gpu_type_key] = gpu_assign_device_value
+
+    print(f"limits: {limits}")
+    print(f"container: {container}")
     container["resources"]["limits"] = limits
-
+    print(f"notebook_annotations: {notebook}")
 
 def set_notebook_configurations(notebook, body, defaults):
     notebook_labels = notebook["metadata"]["labels"]

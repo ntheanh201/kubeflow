@@ -162,7 +162,7 @@ export class FormGpusComponent implements OnInit {
   private fractionalGpuValidator(): ValidatorFn {
     return (control: AbstractControl): { [key: string]: any } => {
       const fractionalValue = control.value;
-      const numValue = this.parentForm?.get('gpus')?.get('num')?.value;
+      // const numValue = this.parentForm?.get('gpus')?.get('num')?.value;
       const fractionalType = this.parentForm?.get('gpus')?.get('fractionalType')?.value;
 
       // If fractional value is provided and type is fraction
@@ -171,11 +171,7 @@ export class FormGpusComponent implements OnInit {
         if (fractionalValue < 0.1 || fractionalValue > 1.0) {
           return { invalidRange: true };
         }
-        
-        // Check if both num and fractional are specified
-        if (numValue && numValue !== 'none') {
-          return { conflictWithNum: true };
-        }
+
       }
 
       return null;
@@ -185,7 +181,6 @@ export class FormGpusComponent implements OnInit {
   private fractionalMemoryValidator(): ValidatorFn {
     return (control: AbstractControl): { [key: string]: any } => {
       const fractionalMemoryValue = control.value;
-      const numValue = this.parentForm?.get('gpus')?.get('num')?.value;
       const fractionalType = this.parentForm?.get('gpus')?.get('fractionalType')?.value;
 
       // If fractional memory value is provided and type is memory
@@ -194,11 +189,7 @@ export class FormGpusComponent implements OnInit {
         if (fractionalMemoryValue < 1024) {
           return { invalidMemoryRange: true };
         }
-        
-        // Check if both num and fractional memory are specified
-        if (numValue && numValue !== 'none') {
-          return { conflictWithNum: true };
-        }
+
       }
 
       return null;

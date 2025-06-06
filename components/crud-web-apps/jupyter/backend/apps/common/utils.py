@@ -130,6 +130,7 @@ def notebook_dict_from_k8s_obj(notebook):
     if notebook["metadata"].get("annotations"):
         annotations = notebook["metadata"]["annotations"]
         server_type = annotations.get("notebooks.kubeflow.org/server-type")
+        # TODO-ntheanh201: Handle fractional GPU values
 
     return {
         "name": notebook["metadata"]["name"],
