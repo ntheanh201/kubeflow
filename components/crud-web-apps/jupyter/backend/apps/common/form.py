@@ -311,10 +311,10 @@ def set_notebook_gpus(notebook, body, defaults):
         gpu_type_key = vendor.replace("/gpu", "/use-gpuuuid")
         notebook_annotations[gpu_type_key] = gpu_assign_device_value
 
-    print(f"limits: {limits}")
-    print(f"container: {container}")
+    # print(f"limits: {limits}")
+    # print(f"container: {container}")
     container["resources"]["limits"] = limits
-    print(f"notebook_annotations: {notebook}")
+    # print(f"notebook_annotations: {notebook}")
 
 def set_notebook_configurations(notebook, body, defaults):
     notebook_labels = notebook["metadata"]["labels"]

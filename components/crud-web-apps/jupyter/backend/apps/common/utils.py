@@ -73,7 +73,9 @@ def process_gpus(container):
 
     count = 0
     gpus = []
+    fractional_gpus = []
     resource_limits = container.get("resources", {}).get("limits", {})
+    
     for vendor in gpu_vendors.keys():
         if vendor not in resource_limits:
             continue
@@ -84,7 +86,17 @@ def process_gpus(container):
         # final message will be like: 1 NVIDIA, 2 AMD
         gpus.append("%s %s" % (gpu_count, gpu_vendors[vendor]))
 
-    return {"count": count, "message": ", ".join(gpus)}
+        # Check for fractional GPU resources, handle fractional GPUs with HAMi-Scheduler
+        for key in resource_limits:
+            if key.startswith(vendor.split("/")[0] + "/"):
+                resource_type = key.split("/")[1]
+                if resource_type in ["gpumem", "gpucores", "gpumem-percentage"]:
+                    fractional_gpus.append({
+                        "type": resource_type,
+                        "value": resource_limits[key],
+                    })
+
+    return {"count": count, "message": ", ".join(gpus), "fractional_gpus": fractional_gpus}
 
 
 def pvc_from_dict(vol, namespace):
@@ -130,6 +142,8 @@ def notebook_dict_from_k8s_obj(notebook):
     if notebook["metadata"].get("annotations"):
         annotations = notebook["metadata"]["annotations"]
         server_type = annotations.get("notebooks.kubeflow.org/server-type")
+        fractional_gpu_type = annotations.get("nvidia.com/nouse-gputype") or annotations.get("nvidia.com/use-gputype")
+        fractional_gpu_uuid = annotations.get("nvidia.com/use-gpuuuid")
         # TODO-ntheanh201: Handle fractional GPU values
 
     return {
