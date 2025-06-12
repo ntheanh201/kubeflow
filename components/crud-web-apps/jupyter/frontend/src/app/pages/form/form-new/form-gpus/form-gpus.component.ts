@@ -3,6 +3,7 @@ import { FormGroup, ValidatorFn, AbstractControl } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { GPUVendor } from 'src/app/types';
 import { JWABackendService } from 'src/app/services/backend.service';
+import { SnackType, SnackBarService } from 'kubeflow';
 
 @Component({
   selector: 'app-form-gpus',
@@ -20,7 +21,10 @@ export class FormGpusComponent implements OnInit {
   maxGPUs = 16;
   gpusCount = ['1', '2', '4', '8'];
 
-  constructor(public backend: JWABackendService) {}
+  constructor(
+    public backend: JWABackendService,
+    private snack: SnackBarService,
+  ) {}
 
   ngOnInit() {
     this.gpuCtrl = this.parentForm.get('gpus') as FormGroup;
@@ -134,6 +138,15 @@ export class FormGpusComponent implements OnInit {
     }
     if (fractionalMemoryCtrl.hasError('conflictWithNum')) {
       return $localize`Cannot specify both whole number and fractional GPUs`;
+    }
+  }
+
+  public getFractionalCoresError() {
+    const fractionalCoresCtrl = this.parentForm.get('gpus').get('fractionalCores');
+    if (fractionalCoresCtrl.hasError('min')) {
+      return $localize`Cores value must be at least 1`;
+    } else if (fractionalCoresCtrl.hasError('max')) {
+      return $localize`Cores value must be less than 100`;
     }
   }
 

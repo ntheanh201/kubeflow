@@ -122,7 +122,6 @@ export const defaultConfig: TableConfig = {
       }),
       sort: true,
     },
-
     {
       matHeaderCellDef: '',
       matColumnDef: 'actions',

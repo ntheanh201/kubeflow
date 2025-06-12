@@ -24,9 +24,14 @@ export function getFormDefaults(): FormGroup {
     gpus: fb.group({
       vendor: ['', []],
       num: ['', []],
-      fractional: ['', []],
       fractionalType: ['none', []],
+      fractional: ['', []],
       fractionalMemory: ['', []],
+      fractionalCores: ['', []],
+      useGpuType: ['', []],
+      noUseGpuType: ['', []],
+      useGpuUUID: ['', []],
+      gpuSchedulerPolicy: ['', []],
     }),
     workspace: fb.group({
       mount: ['/home/jovyan', [Validators.required]],
@@ -59,6 +64,11 @@ export function updateGPUControl(formCtrl: FormGroup, gpuConf: any) {
     formCtrl.get('fractional').setValue('');
     formCtrl.get('fractionalType').setValue('none');
     formCtrl.get('fractionalMemory').setValue('');
+    formCtrl.get('fractionalCores').setValue('');
+    formCtrl.get('useGpuType').setValue('');
+    formCtrl.get('noUseGpuType').setValue('');
+    formCtrl.get('useGpuUUID').setValue('');
+    formCtrl.get('gpuSchedulerPolicy').setValue('');
     return;
   }
 
@@ -74,11 +84,20 @@ export function updateGPUControl(formCtrl: FormGroup, gpuConf: any) {
   } else if (gpu.fractionalMemory) {
     formCtrl.get('fractionalMemory').setValue(gpu.fractionalMemory);
     formCtrl.get('fractionalType').setValue('memory');
+  } else if (gpu.fractionalCores) {
+    formCtrl.get('fractionalCores').setValue(gpu.fractionalCores);
+    formCtrl.get('fractionalType').setValue('cores');
   } else {
     formCtrl.get('fractional').setValue('');
     formCtrl.get('fractionalMemory').setValue('');
+    formCtrl.get('fractionalCores').setValue('');
     formCtrl.get('fractionalType').setValue('none');
   }
+
+  formCtrl.get('useGpuType').setValue(gpu.useGpuType);
+  formCtrl.get('noUseGpuType').setValue(gpu.noUseGpuType);
+  formCtrl.get('useGpuUUID').setValue(gpu.useGpuUUID);
+  formCtrl.get('gpuSchedulerPolicy').setValue(gpu.gpuSchedulerPolicy);
 
   // Don't allow the user to edit them if the admin does not allow it
   if (gpuConf.readOnly) {
@@ -87,6 +106,11 @@ export function updateGPUControl(formCtrl: FormGroup, gpuConf: any) {
     formCtrl.get('fractional').disable();
     formCtrl.get('fractionalType').disable();
     formCtrl.get('fractionalMemory').disable();
+    formCtrl.get('fractionalCores').disable();
+    formCtrl.get('useGpuType').disable();
+    formCtrl.get('noUseGpuType').disable();
+    formCtrl.get('useGpuUUID').disable();
+    formCtrl.get('gpuSchedulerPolicy').disable();
   }
 }
 

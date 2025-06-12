@@ -227,8 +227,8 @@ def set_notebook_gpus(notebook, body, defaults):
     gpus = get_form_value(body, defaults, "gpus")
 
     # Make sure the GPUs value is properly formatted
-    if "num" not in gpus and "fractional" not in gpus and "fractionalMemory" not in gpus and "core" not in gpus:
-        raise BadRequest("'gpus' must have either a 'num', 'fractional', 'fractionalMemory', or 'core' field")
+    if "num" not in gpus and "fractional" not in gpus and "fractionalMemory" not in gpus and "fractionalCores" not in gpus:
+        raise BadRequest("'gpus' must have either a 'num', 'fractional', 'fractionalMemory', or 'fractionalCores' field")
 
     if gpus["num"] == "none":
         return
@@ -243,9 +243,9 @@ def set_notebook_gpus(notebook, body, defaults):
     elif "fractionalMemory" in gpus and gpus["fractionalMemory"]:
         gpu_value = gpus["fractionalMemory"]
         gpu_type = "memory"
-    elif "core" in gpus and gpus["core"]:
-        gpu_value = gpus["core"]
-        gpu_type = "core"
+    elif "fractionalCores" in gpus and gpus["fractionalCores"]:
+        gpu_value = gpus["fractionalCores"]
+        gpu_type = "cores"
 
     # TODO-ntheanh201: handle fractional GPUs with KAI-Scheduler
     notebook_annotations = notebook["metadata"]["annotations"]
@@ -285,31 +285,26 @@ def set_notebook_gpus(notebook, body, defaults):
         limits[memory_key] = gpu_str
 
     # Handle device code usage fractional GPUs    
-    if gpu_type == "core":
+    if gpu_type == "cores":
         core_key = vendor.replace("/gpu", "/gpucores")
         limits[core_key] = gpu_str
 
-    # Handle certain device type
-    gpu_assign_device = gpus["assign_device"] if "assign_device" in gpus else None
-    gpu_assign_device_value = gpus["assign_device_value"] if "assign_device_value" in gpus else None
-    # Assign to certain device type
-    if gpu_assign_device == "type":
-        # metadata:
-        #   annotations:
-        #     nvidia.com/use-gputype: "A100,V100" or
-        #     nvidia.com/nouse-gputype: "1080,2080"
-        if gpu_assign_device_value[0].isdigit():
-            gpu_type_key = vendor.replace("/gpu", "/nouse-gputype")
-        else:
-            gpu_type_key = vendor.replace("/gpu", "/use-gputype")
-        notebook_annotations[gpu_type_key] = gpu_assign_device_value
-    
-    if gpu_assign_device == "uuid":
-        # metadata:
-        #   annotations:
-        #     nvidia.com/use-gpuuuid: "GPU-123456"
-        gpu_type_key = vendor.replace("/gpu", "/use-gpuuuid")
-        notebook_annotations[gpu_type_key] = gpu_assign_device_value
+    # Handle GPU type constraints
+    if gpus.get("useGpuType"):
+        gpu_type_key = vendor.replace("/gpu", "/use-gputype")
+        notebook_annotations[gpu_type_key] = gpus["useGpuType"]
+
+    if gpus.get("noUseGpuType"):
+        gpu_type_key = vendor.replace("/gpu", "/nouse-gputype")
+        notebook_annotations[gpu_type_key] = gpus["noUseGpuType"]
+
+    if gpus.get("useGpuUUID"):
+        gpu_uuid_key = vendor.replace("/gpu", "/use-gpuuuid")
+        notebook_annotations[gpu_uuid_key] = gpus["useGpuUUID"]
+
+    if gpus.get("gpuSchedulerPolicy"):
+        gpu_scheduler_policy = vendor.replace("/gpu", "/gpu-scheduler-policy")
+        notebook_annotations[gpu_scheduler_policy] = gpus["gpuSchedulerPolicy"]
 
     # print(f"limits: {limits}")
     # print(f"container: {container}")
