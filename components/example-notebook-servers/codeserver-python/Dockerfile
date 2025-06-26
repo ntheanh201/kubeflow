@@ -9,6 +9,11 @@ ARG TARGETARCH
 
 USER root
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    && rm -rf /var/lib/apt/lists/*
+
 # args - software versions
 # https://open-vsx.org/extension/ms-python/python
 # https://open-vsx.org/extension/ms-toolsai/jupyter

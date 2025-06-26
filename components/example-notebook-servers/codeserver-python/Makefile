@@ -15,12 +15,13 @@
 GIT_COMMIT     := $(shell git rev-parse HEAD)
 GIT_TREE_STATE := $(shell test -n "`git status --porcelain`" && echo "-dirty" || echo "")
 
-REGISTRY ?= ghcr.io/kubeflow/kubeflow/notebook-servers
+REGISTRY ?= ghcr.io/ntheanh201/kubeflow/notebook-servers
 TAG      ?= sha-$(GIT_COMMIT)$(GIT_TREE_STATE)
 
 IMAGE_NAME := codeserver-python
 
-BASE_IMAGE         := $(REGISTRY)/codeserver:$(TAG)
+# BASE_IMAGE         := $(REGISTRY)/codeserver:$(TAG)
+BASE_IMAGE         := ghcr.io/kubeflow/kubeflow/notebook-servers/codeserver:v1.10.0
 BASE_IMAGE_FOLDERS := codeserver
 
 # we use a separate registry-type cache to keep the main registry clean

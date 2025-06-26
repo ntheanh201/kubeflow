@@ -3,7 +3,6 @@
 bin/
 vendor/
 
-.vscode/
 
 # Compiled python files.
 *.pyc
@@ -54,3 +53,5 @@ scripts/gke/build/**
 
 # Created after running JWA e2e tests
 **/geckodriver.log
+config.bat
+node_modules
