@@ -204,6 +204,10 @@ export class OverviewComponent implements OnInit, OnDestroy {
     return this.getMemoryLimits(this.notebook);
   }
 
+  get fractionalGpus(): { key: string; value: string }[] {
+    return this.getFractionalGpus(this.notebook);
+  }
+
   getMemoryLimits(notebook: NotebookRawObject): string {
     if (!notebook?.spec?.template?.spec?.containers) {
       return null;
@@ -217,6 +221,68 @@ export class OverviewComponent implements OnInit, OnDestroy {
       }
       return cn.resources.limits?.memory;
     }
+  }
+
+  getFractionalGpus(notebook: NotebookRawObject): { key: string; value: string }[] {
+    const result: { key: string; value: string }[] = [];
+    const annotations = notebook?.metadata?.annotations;
+    const limits =
+      notebook?.spec?.template?.spec?.containers[0]?.resources?.limits;
+
+    if (!annotations && !limits) {
+      return null;
+    }
+
+    const annotationKeys = [
+      'nvidia.com/gpu-scheduler-policy',
+      'nvidia.com/use-gpuuuid',
+      'nvidia.com/use-gputype',
+      'nvidia.com/nouse-gputype',
+    ];
+
+    const limitKeys = [
+      'nvidia.com/gpumem',
+      'nvidia.com/gpucores',
+      'nvidia.com/gpumem-percentage',
+    ];
+
+    // Check annotations
+    if (annotations) {
+      for (const key of annotationKeys) {
+        if (annotations[key]) {
+          result.push({
+            key: this.formatGpuKey(key),
+            value: annotations[key],
+          });
+        }
+      }
+    }
+
+    // Check limits
+    if (limits) {
+      for (const key of limitKeys) {
+        if (limits[key]) {
+          result.push({ key: this.formatGpuKey(key), value: limits[key] });
+        }
+      }
+
+      // Also get the number of GPUs
+      for (const key in limits) {
+        if (key.endsWith('/gpu')) {
+          result.push({ key: this.formatGpuKey(key), value: limits[key] });
+        }
+      }
+    }
+
+    return result.length ? result : null;
+  }
+
+  formatGpuKey(key: string): string {
+    const parts = key.split('/');
+    const name = parts[parts.length - 1];
+    return name
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase());
   }
 
   get dockerImage(): string {

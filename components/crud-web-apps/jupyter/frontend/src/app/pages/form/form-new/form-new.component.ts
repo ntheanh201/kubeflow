@@ -122,6 +122,31 @@ export class FormNewComponent implements OnInit, OnDestroy {
       notebook.gpus.num = notebook.gpus.num.toString();
     }
 
+    // Ensure fractional GPU input is a string
+    if (notebook.gpus && notebook.gpus.fractional != null && notebook.gpus.fractional !== '') {
+      if (typeof notebook.gpus.fractional === 'number') {
+        notebook.gpus.fractional = notebook.gpus.fractional.toString();
+      }
+    } else if (notebook.gpus) {
+      // Remove empty fractional field
+      delete notebook.gpus.fractional;
+    }
+
+    // Ensure fractional memory GPU input is a string
+    if (notebook.gpus && notebook.gpus.fractionalMemory != null && notebook.gpus.fractionalMemory !== '') {
+      if (typeof notebook.gpus.fractionalMemory === 'number') {
+        notebook.gpus.fractionalMemory = notebook.gpus.fractionalMemory.toString();
+      }
+    } else if (notebook.gpus) {
+      // Remove empty fractional memory field
+      delete notebook.gpus.fractionalMemory;
+    }
+
+    // Remove fractionalType field as it's only for UI control
+    if (notebook.gpus) {
+      delete notebook.gpus.fractionalType;
+    }
+
     // Remove cpuLimit from request if null
     if (notebook.cpuLimit == null) {
       delete notebook.cpuLimit;

@@ -227,8 +227,8 @@ def set_notebook_gpus(notebook, body, defaults):
     gpus = get_form_value(body, defaults, "gpus")
 
     # Make sure the GPUs value is properly formatted
-    if "num" not in gpus:
-        raise BadRequest("'gpus' must have a 'num' field")
+    if "num" not in gpus and "fractional" not in gpus and "fractionalMemory" not in gpus and "fractionalCores" not in gpus:
+        raise BadRequest("'gpus' must have either a 'num', 'fractional', 'fractionalMemory', or 'fractionalCores' field")
 
     if gpus["num"] == "none":
         return
@@ -236,16 +236,76 @@ def set_notebook_gpus(notebook, body, defaults):
     if "vendor" not in gpus:
         raise BadRequest("'gpus' must have a 'vendor' field")
 
-    # set the gpus annotation
-    container = notebook["spec"]["template"]["spec"]["containers"][0]
-    vendor = gpus["vendor"]
+    # Handle fractional GPUs with HAMi-Scheduler
     try:
         num = str(gpus["num"])
     except ValueError:
         raise BadRequest("gpus.num is not a valid number: %s" % gpus["num"])
 
+    container = notebook["spec"]["template"]["spec"]["containers"][0]
+    vendor = gpus["vendor"]
     limits = container["resources"].get("limits", {})
     limits[vendor] = num
+
+    # Only process fractional GPU logic if a fractional field is set and non-empty
+    gpu_value = None
+    gpu_type = None
+    if ("fractional" in gpus and gpus["fractional"]) or ("fractionalMemory" in gpus and gpus["fractionalMemory"]) or ("fractionalCores" in gpus and gpus["fractionalCores"]):
+        if "fractional" in gpus and gpus["fractional"]:
+            gpu_value = gpus["fractional"]
+            gpu_type = "fractional"
+        elif "fractionalMemory" in gpus and gpus["fractionalMemory"]:
+            gpu_value = gpus["fractionalMemory"]
+            gpu_type = "memory"
+        elif "fractionalCores" in gpus and gpus["fractionalCores"]:
+            gpu_value = gpus["fractionalCores"]
+            gpu_type = "cores"
+
+        # TODO-ntheanh201: handle fractional GPUs with KAI-Scheduler
+        notebook_annotations = notebook["metadata"]["annotations"]
+
+        # Convert to string, handling both integer and fractional values
+        try:
+            if isinstance(gpu_value, (int, float)):
+                gpu_str = str(gpu_value)
+            else:
+                # Validate that it's a valid number
+                float(gpu_value)
+                gpu_str = str(gpu_value)
+        except (ValueError, TypeError):
+            raise BadRequest("GPU value is not a valid number: %s" % gpu_value)
+
+        # Handle fractional GPUs
+        if gpu_type == "fractional":
+            fractional_key = vendor.replace("/gpu", "/gpumem-percentage")
+            limits[fractional_key] = str(float(gpu_str) * 100)
+
+        # Handle memory-based fractional GPUs
+        if gpu_type == "memory":
+            memory_key = vendor.replace("/gpu", "/gpumem")
+            limits[memory_key] = gpu_str
+
+        # Handle device code usage fractional GPUs    
+        if gpu_type == "cores":
+            core_key = vendor.replace("/gpu", "/gpucores")
+            limits[core_key] = gpu_str
+
+        # Handle GPU type constraints
+        if gpus.get("useGpuType"):
+            gpu_type_key = vendor.replace("/gpu", "/use-gputype")
+            notebook_annotations[gpu_type_key] = gpus["useGpuType"]
+
+        if gpus.get("noUseGpuType"):
+            gpu_type_key = vendor.replace("/gpu", "/nouse-gputype")
+            notebook_annotations[gpu_type_key] = gpus["noUseGpuType"]
+
+        if gpus.get("useGpuUUID"):
+            gpu_uuid_key = vendor.replace("/gpu", "/use-gpuuuid")
+            notebook_annotations[gpu_uuid_key] = gpus["useGpuUUID"]
+
+        if gpus.get("gpuSchedulerPolicy"):
+            gpu_scheduler_policy = vendor.replace("/gpu", "/gpu-scheduler-policy")
+            notebook_annotations[gpu_scheduler_policy] = gpus["gpuSchedulerPolicy"]
 
     container["resources"]["limits"] = limits
 

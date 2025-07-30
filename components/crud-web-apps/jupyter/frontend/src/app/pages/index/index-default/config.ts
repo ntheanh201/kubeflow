@@ -13,6 +13,7 @@ import {
   quantityToScalar,
 } from 'kubeflow';
 import { ServerTypeComponent } from './server-type/server-type.component';
+import { FractionalGpusComponent } from './fractional-gpus/fractional-gpus.component';
 
 // --- Config for the Resource Table ---
 export const defaultConfig: TableConfig = {
@@ -93,6 +94,16 @@ export const defaultConfig: TableConfig = {
       sort: true,
     },
     {
+      matHeaderCellDef: $localize`Fractional GPUs`,
+      matColumnDef: 'fractional_gpus',
+      style: { width: '8%' },
+      textAlignment: 'right',
+      value: new ComponentValue({
+        component: FractionalGpusComponent,
+      }),
+      sort: true,
+    },
+    {
       matHeaderCellDef: $localize`CPUs`,
       matColumnDef: 'cpu',
       style: { width: '8%' },
@@ -111,7 +122,6 @@ export const defaultConfig: TableConfig = {
       }),
       sort: true,
     },
-
     {
       matHeaderCellDef: '',
       matColumnDef: 'actions',

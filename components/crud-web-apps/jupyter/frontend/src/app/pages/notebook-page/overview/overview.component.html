@@ -40,6 +40,10 @@
   {{ memoryLimits }}
 </lib-details-list-item>
 
+<lib-details-list-item *ngFor="let gpu of fractionalGpus" [key]="gpu.key">
+  {{ gpu.value }}
+</lib-details-list-item>
+
 <lib-details-list-item key="Image" [copyValue]="dockerImage">
   {{ dockerImage }}
 </lib-details-list-item>

@@ -25,6 +25,10 @@ export interface NotebookResponseObject {
   gpus: {
     count: number;
     message: string;
+    fractional_gpus: {
+      type: string;
+      value: string;
+    }[];
   };
   environment: string;
   shortImage: string;

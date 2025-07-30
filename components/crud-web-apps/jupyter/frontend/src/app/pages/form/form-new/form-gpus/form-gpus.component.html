@@ -26,4 +26,147 @@
       <mat-error>{{ getVendorError() }}</mat-error>
     </mat-form-field>
   </div>
+
+  <!--Fractional GPUs Section - New Row-->
+  <div class="row" [formGroup]="parentForm.get('gpus')">
+    <div class="fractional-gpu-section">
+      <mat-label class="section-label" i18n>Fractional GPU Allocation</mat-label>
+      
+      <!-- Allocation Type Selection -->
+      <mat-radio-group formControlName="fractionalType" class="allocation-type-group">
+        <mat-radio-button value="none" i18n>None</mat-radio-button>
+        <mat-radio-button value="fraction" i18n>By Fraction</mat-radio-button>
+        <mat-radio-button value="memory" i18n>By Memory</mat-radio-button>
+        <mat-radio-button value="cores" i18n>By Cores</mat-radio-button>
+      </mat-radio-group>
+
+      <!-- Fraction Input -->
+      <mat-form-field 
+        appearance="outline" 
+        class="fractional-input"
+        *ngIf="parentForm.get('gpus').get('fractionalType').value === 'fraction'"
+      >
+        <mat-label i18n>GPU Fraction</mat-label>
+        <input
+          matInput
+          type="number"
+          min="0.1"
+          max="1"
+          step="0.1"
+          placeholder="0.5"
+          formControlName="fractional"
+          id="gpu-fractional"
+        />
+        <mat-hint i18n>Specify fractional GPU allocation (0.1 - 1.0)</mat-hint>
+        <mat-error>{{ getFractionalError() }}</mat-error>
+      </mat-form-field>
+
+      <!-- Memory Input -->
+      <mat-form-field 
+        appearance="outline" 
+        class="fractional-input"
+        *ngIf="parentForm.get('gpus').get('fractionalType').value === 'memory'"
+      >
+        <mat-label i18n>GPU Memory (MiB)</mat-label>
+        <input
+          matInput
+          type="number"
+          min="1024"
+          step="1024"
+          placeholder="4096"
+          formControlName="fractionalMemory"
+          id="gpu-fractional-memory"
+        />
+        <mat-hint i18n>Specify GPU memory allocation in MiB (e.g., 4096 for 4GB)</mat-hint>
+        <mat-error>{{ getFractionalMemoryError() }}</mat-error>
+      </mat-form-field>
+
+      <!-- Cores Input -->
+      <mat-form-field
+        appearance="outline"
+        class="fractional-input"
+        *ngIf="parentForm.get('gpus').get('fractionalType').value === 'cores'"
+      >
+        <mat-label i18n>GPU Cores</mat-label>
+        <input
+          matInput
+          type="number"
+          min="1"
+          max="100"
+          step="1"
+          placeholder="10"
+          formControlName="fractionalCores"
+          id="gpu-fractional-cores"
+        />
+        <mat-hint i18n>Specify GPU cores allocation</mat-hint>
+        <mat-error>{{ getFractionalCoresError() }}</mat-error>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <mat-divider class="row-divider"></mat-divider>
+
+  <!-- Advanced GPU Settings -->
+  <div class="row" style="padding: 0.5em">
+    <div
+      class="section-label"
+      style="font-size: 14px; font-weight: 500; margin: 12px 0;"
+      i18n
+    >
+      Advanced GPU Settings
+    </div>
+  </div>
+  <div class="row" [formGroup]="parentForm.get('gpus')">
+    <!-- Scheduler Policy -->
+    <mat-form-field appearance="outline" class="column">
+      <mat-label i18n>Scheduler Policy</mat-label>
+      <mat-select matNativeControl formControlName="gpuSchedulerPolicy">
+        <mat-option value="" i18n>--</mat-option>
+        <mat-option value="binpack" i18n>binpack</mat-option>
+        <mat-option value="spread" i18n>spread</mat-option>
+      </mat-select>
+      <mat-hint i18n>Select the GPU scheduler policy</mat-hint>
+    </mat-form-field>
+
+    <!-- GPU UUID -->
+    <mat-form-field appearance="outline" class="column">
+      <mat-label i18n>Specific GPU UUID</mat-label>
+      <input
+        matInput
+        placeholder="GPU-123456"
+        formControlName="useGpuUUID"
+        id="gpu-use-uuid"
+      />
+      <mat-hint i18n>Assign to a specific GPU by its UUID</mat-hint>
+    </mat-form-field>
+  </div>
+  <div class="row" [formGroup]="parentForm.get('gpus')">
+    <!-- Include GPU Types -->
+    <mat-form-field appearance="outline" class="column">
+      <mat-label i18n>Include GPU Types</mat-label>
+      <input
+        matInput
+        placeholder="A100,V100"
+        formControlName="useGpuType"
+        id="gpu-use-type"
+      />
+      <mat-hint i18n
+        >Comma-separated list of GPU types to be scheduled on</mat-hint
+      >
+    </mat-form-field>
+
+    <!-- Exclude GPU Types -->
+    <mat-form-field appearance="outline" class="column">
+      <mat-label i18n>Exclude GPU Types</mat-label>
+      <input
+        matInput
+        placeholder="1080,2080"
+        formControlName="noUseGpuType"
+        id="gpu-nouse-type"
+      />
+      <mat-hint i18n
+        >Comma-separated list of GPU types to not be scheduled on</mat-hint
+      >
+    </mat-form-field>
+  </div>
 </lib-form-section>
